@@ -1,0 +1,9 @@
+{
+  "name": "asyncraptor",
+  "version": "0.1",
+  "description": "A JavaScript library for async generators",
+  "main": "lib/index.js",
+  "repository": "https://github.com/pibone/asyncraptor",
+  "author": "Daniel Peña <danpeis@gmail.com>",
+  "license": "MIT"
+}
