@@ -122,4 +122,4 @@ export const take = (n) => innerTake.bind(n);
 export const first = (values) => innerTake.call(1, values).next().then(innerFirst);
 export const skip = (n) => innerSkip.bind(n);
 export const chain = innerChain;
-export const compose = require('lodash/flowRight');
+// export const compose = require('lodash/flowRight');
