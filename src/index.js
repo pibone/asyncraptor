@@ -85,6 +85,25 @@ async function* streamAsyncGenerator(...args) {
   }
 }
 
+function* applySerially (entryVal, fns) {
+  let val = entryVal;
+  const length = fns.length - 1;
+  for(let i = 0; i < length; i++) {
+    val = yield fns[i](val);
+  }
+  return fns[length](val);
+}
+
+function innerChain (val, fns, capture = () => {}) {
+  const iter = applySerially(val, fns);
+  let ret;
+  for (ret = { value: val, done: false }; !ret.done; ret = iter.next(ret.value)) {
+    capture(ret);
+  }
+  capture(ret);
+  return ret.value;
+};
+
 export const createStreamGenerator = (fn) => streamAsyncGenerator.bind(fn);
 
 const innerFirst = (v) => {
@@ -102,5 +121,5 @@ export const toArray = (values) => innerToArray(values);
 export const take = (n) => innerTake.bind(n);
 export const first = (values) => innerTake.call(1, values).next().then(innerFirst);
 export const skip = (n) => innerSkip.bind(n);
-export const chain = require('lodash/flow');
+export const chain = innerChain;
 export const compose = require('lodash/flowRight');
