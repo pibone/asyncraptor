@@ -1,9 +1,22 @@
 {
   "name": "asyncraptor",
-  "version": "0.1",
+  "version": "0.1.1",
   "description": "A JavaScript library for async generators",
   "main": "lib/index.js",
   "repository": "https://github.com/pibone/asyncraptor",
   "author": "Daniel Peña <danpeis@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "compile": "babel -d lib src",
+    "prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-preset-es2015": "^6.24.0",
+    "babel-preset-stage-3": "^6.22.0",
+    "jest": "^19.0.2"
+  },
+  "dependencies": {
+    "asyncraptor": "https://github.com/pibone/asyncraptor.git"
+  }
 }
