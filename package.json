@@ -16,7 +16,5 @@
     "babel-preset-stage-3": "^6.22.0",
     "jest": "^19.0.2"
   },
-  "dependencies": {
-    "asyncraptor": "https://github.com/pibone/asyncraptor.git"
-  }
+  "dependencies": {}
 }
