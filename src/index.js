@@ -1,88 +1,48 @@
-async function innerEach(values) {
-  if (values[Symbol.asyncIterator])
-    for await(const value of values) this(value);
-  else
-    for (const value of values) this(value);
+function innerEach(values) {
+  for (const value of values) this(value);
 }
 
-async function* innerMap(values) {
-  if (values[Symbol.asyncIterator])
-    for await(const value of values) yield this(value);
-  else {
-    for (const value of values) yield this(value);
-  }
+function* innerMap(values) {
+  for (const value of values) yield this(value);
 }
 
-async function innerToArray(values){
-  if(values[Symbol.asyncIterator]) {
-    const array = [];
-    await innerEach.call ((v) => array.push(v), values);
-    return array;
-  } else {
-    return Array.of(values);
-  }
+function innerToArray(values){
+  return Array.of(values);
 }
 
-async function* innerFilter(values) {
-  if (values[Symbol.asyncIterator]) {
-    for await(const value of values) {
-      if (this(value))
-        yield value;
-    }
-  } else {
-    for (const value of values) {
-      if (this(value))
-        yield value;
-    };
-  }
-}
-
-async function* innerTake(values) {
-  let i = this;
-  if (values[Symbol.asyncIterator]) {
-    for await(const value of values) {
-      if (!i--) return;
+function* innerFilter(values) {
+  for (const value of values) {
+    if (this(value))
       yield value;
-    }
-  } else {
-    for (const value of values) {
-      if (!i--) return;
-      yield value;
-    };
-  }
+  };
 }
 
-async function* innerSkip(values) {
-  let i = this;
-  if (values[Symbol.asyncIterator]) {
-    for await(const value of values) {
-      if (i) {
-        --i;
-        continue;
-      };
-      yield value;
-    }
-  } else {
-    for (const value of values) {
-      if (i) {
-        --i;
-        continue;
-      };
-      yield value;
-    };
-  }
-}
-
-async function* streamAsyncGenerator(...args) {
-  const stream = this(...args);
-  await new Promise((r) => stream.on('readable', r));
-  while (true) {
-    const value = stream.read();
-    if (value === null) {
-      return;
-    }
+function* innerTakeUntil(values) {
+  let i = 0;
+  const fn = this;
+  for (const value of values) {
+    if (fn(value, i--)) return;
     yield value;
-  }
+  };
+}
+
+function innerTakePredicate (val, n) {
+  const i = this;
+  return i >= n;
+}
+function innerTake(values) {
+  return innerTakeUntil(innerTakePredicate.bind(this));
+}
+
+function* innerSkip(values) {
+  let i = this;
+  for (const value of values) {
+    if (i) {
+      --i;
+      continue;
+    };
+    yield value;
+  };
 }
 
 function* applySerially (entryVal, fns) {
@@ -94,18 +54,6 @@ function* applySerially (entryVal, fns) {
   return fns[length](val);
 }
 
-function innerChain (val, fns, capture = () => {}) {
-  const iter = applySerially(val, fns);
-  let ret;
-  for (ret = { value: val, done: false }; !ret.done; ret = iter.next(ret.value)) {
-    capture(ret);
-  }
-  capture(ret);
-  return ret.value;
-};
-
-export const createStreamGenerator = (fn) => streamAsyncGenerator.bind(fn);
-
 const innerFirst = (v) => {
   if (v.done) {
     throw new Error("Sequence ended before emitting a single value");
@@ -114,12 +62,28 @@ const innerFirst = (v) => {
   }
 };
 
+function streamIterator(...args) {
+  const stream = this(...args);
+  const readablePromise = new Promise((r) => stream.on('readable', r));
+  return readablePromise
+    .then(() => ({
+      [Symbol.iterator]() {
+        return this;
+      },
+      next() {
+        const value = stream.read();
+        return value === null ? { done: true } : { done: false, value };
+      },
+    }));
+}
+
+const createStreamIterator = (fn) => streamIterator.bind(fn);
+
 export const each = (fn) => innerEach.bind(fn);
 export const map = (mapper) => innerMap.bind(mapper);
 export const filter = (predicate) => innerFilter.bind(predicate);
 export const toArray = (values) => innerToArray(values);
 export const take = (n) => innerTake.bind(n);
-export const first = (values) => innerTake.call(1, values).next().then(innerFirst);
+export const takeUntil = (fn) => innerTakeUntil.bind(fn);
+export const first = (values) => innerFirst(innerTake.call(1, values).next());
 export const skip = (n) => innerSkip.bind(n);
-export const chain = innerChain;
-// export const compose = require('lodash/flowRight');
