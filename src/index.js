@@ -77,8 +77,7 @@ function streamIterator(...args) {
     }));
 }
 
-const createStreamIterator = (fn) => streamIterator.bind(fn);
-
+export const createStreamIterator = (fn) => streamIterator.bind(fn);
 export const each = (fn) => innerEach.bind(fn);
 export const map = (mapper) => innerMap.bind(mapper);
 export const filter = (predicate) => innerFilter.bind(predicate);
